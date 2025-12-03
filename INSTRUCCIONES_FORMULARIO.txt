@@ -1,0 +1,179 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    PIXEL TERMO - CONFIGURACIÓN DEL FORMULARIO            ║
+║                         Formulario de Contacto con Turnstile             ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+El formulario de contacto ya está instalado y funcional. Solo necesitas configurar
+las credenciales SMTP para que los emails se envíen correctamente.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 PASOS PARA CONFIGURAR:
+
+1. CONFIGURAR EL ARCHIVO config.php
+   ────────────────────────────────────────────────────────────────────────
+   Abre el archivo: config.php
+
+   Necesitas actualizar estas variables:
+
+   a) TURNSTILE_SECRET_KEY
+      - Ya está prellenado con un valor temporal
+      - Obtén tu Secret Key real en: https://dash.cloudflare.com/
+      - Sección: Turnstile
+      - IMPORTANTE: Necesitas el SECRET KEY (no el Site Key)
+
+   b) CONTACT_EMAIL_TO
+      - Email donde recibirás los mensajes
+      - Ejemplo: 'afontes@pixeltermo.com.ar'
+      - Puedes usar ambos emails separados por coma
+
+   c) CONFIGURACIÓN SMTP
+      Tienes 3 opciones:
+
+      OPCIÓN 1: GMAIL (Más fácil para testing)
+      ═══════════════════════════════════════════
+      define('SMTP_HOST', 'smtp.gmail.com');
+      define('SMTP_PORT', 587);
+      define('SMTP_USERNAME', 'tu-email@gmail.com');
+      define('SMTP_PASSWORD', 'tu-app-password');
+
+      IMPORTANTE: Gmail requiere una "App Password"
+      - Ve a: https://myaccount.google.com/apppasswords
+      - Activa la verificación en 2 pasos primero
+      - Genera una "App Password" y úsala aquí
+
+      OPCIÓN 2: HOSTING PROPIO (Recomendado para producción)
+      ═══════════════════════════════════════════════════════════
+      define('SMTP_HOST', 'mail.pixeltermo.com.ar');
+      define('SMTP_PORT', 587);
+      define('SMTP_USERNAME', 'contacto@pixeltermo.com.ar');
+      define('SMTP_PASSWORD', 'tu-password-del-hosting');
+
+      Consulta con tu proveedor de hosting (167.250.5.4) para obtener:
+      - Servidor SMTP (puede ser mail.pixeltermo.com.ar o similar)
+      - Puerto (generalmente 587 o 465)
+      - Usuario y contraseña
+
+      OPCIÓN 3: SERVICIOS EXTERNOS
+      ═════════════════════════════════
+      - SendGrid (100 emails/día gratis)
+      - Mailgun (5000 emails/mes gratis)
+      - Amazon SES
+
+2. OBTENER SECRET KEY DE TURNSTILE
+   ────────────────────────────────────────────────────────────────────────
+   El Site Key ya está configurado en el HTML.
+   Solo necesitas el Secret Key:
+
+   a) Ve a: https://dash.cloudflare.com/
+   b) Inicia sesión con tu cuenta de Cloudflare
+   c) Ve a la sección "Turnstile"
+   d) Busca el sitio con el Site Key: 0x4AAAAAACEhM4-UMwTfa7bf
+   e) Copia el "Secret Key" (NO el Site Key)
+   f) Pégalo en config.php en la variable TURNSTILE_SECRET_KEY
+
+3. SUBIR ARCHIVOS AL SERVIDOR
+   ────────────────────────────────────────────────────────────────────────
+   Asegúrate de subir estos archivos a tu servidor:
+
+   ✓ contact.php           (Procesa el formulario)
+   ✓ config.php            (Credenciales - NO subir a Git)
+   ✓ composer.json         (Dependencias)
+   ✓ vendor/               (Carpeta con PHPMailer - ejecuta composer install)
+   ✓ index.html            (Ya actualizado)
+
+   IMPORTANTE: El archivo config.php NO se subirá a Git (está en .gitignore)
+   Debes configurarlo manualmente en el servidor o subirlo por FTP.
+
+4. INSTALAR DEPENDENCIAS EN EL SERVIDOR (Si es necesario)
+   ────────────────────────────────────────────────────────────────────────
+   Si tu servidor tiene acceso SSH y Composer:
+
+   ssh tu-usuario@167.250.5.4
+   cd /public_html
+   composer install --no-dev
+
+   Si no tiene Composer, puedes:
+   - Subir la carpeta vendor/ completa por FTP (ya está en tu local)
+   - O usar el fallback que usa la función mail() de PHP (ya incluido)
+
+5. PROBAR EL FORMULARIO
+   ────────────────────────────────────────────────────────────────────────
+   a) Abre el sitio: https://www.pixeltermo.com.ar
+   b) Ve a la sección de Contacto
+   c) Llena el formulario
+   d) Completa la verificación de Turnstile
+   e) Envía el mensaje
+   f) Deberías recibir un email en el correo configurado
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔧 ARCHIVOS CREADOS/MODIFICADOS:
+
+✓ index.html              - Formulario agregado con Turnstile
+✓ contact.php             - Backend PHP para procesar formulario
+✓ config.php              - Configuración (EDITAR ESTE ARCHIVO)
+✓ composer.json           - Dependencias de PHP
+✓ vendor/                 - PHPMailer instalado
+✓ .gitignore              - Actualizado para proteger config.php
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔒 SEGURIDAD:
+
+✓ Turnstile protege contra bots
+✓ Validación de datos en el servidor
+✓ Sanitización de inputs (protección XSS)
+✓ config.php NO se sube a Git
+✓ Secret Key nunca expuesto al cliente
+
+═══════════════════════════════════════════════════════════════════════════════
+
+❓ TROUBLESHOOTING:
+
+Problema: "Error al enviar el mensaje"
+→ Verifica que las credenciales SMTP en config.php sean correctas
+→ Revisa los logs de error de PHP (error_log)
+→ Prueba enviando un email de prueba desde tu servidor
+
+Problema: "Verificación de humanidad fallida"
+→ Verifica que el Secret Key en config.php sea correcto
+→ Asegúrate de que coincida con el Site Key del HTML
+
+Problema: "Error de conexión"
+→ Verifica que contact.php esté en el servidor
+→ Verifica que el archivo tenga permisos de ejecución (chmod 644)
+→ Revisa que vendor/autoload.php exista
+
+Problema: Email no llega
+→ Revisa la carpeta de spam
+→ Verifica que SMTP_FROM_EMAIL sea válido
+→ Contacta a tu hosting para verificar configuración SMTP
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📚 RECURSOS ADICIONALES:
+
+Cloudflare Turnstile:
+https://developers.cloudflare.com/turnstile/
+
+PHPMailer Documentación:
+https://github.com/PHPMailer/PHPMailer
+
+Gmail App Passwords:
+https://support.google.com/accounts/answer/185833
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ PRÓXIMOS PASOS:
+
+1. Edita config.php con tus credenciales reales
+2. Obtén el Secret Key de Turnstile de Cloudflare
+3. Sube los archivos al servidor
+4. Prueba el formulario enviando un mensaje de prueba
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¡El formulario está listo! Solo falta la configuración de credenciales.
+
+═══════════════════════════════════════════════════════════════════════════════

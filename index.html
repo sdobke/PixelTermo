@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
     <style>
         /*
          * PIXEL TERMO - Estilos Arcade
@@ -316,6 +319,111 @@
             fill: var(--color-orange);
         }
 
+        /* --- Formulario de Contacto --- */
+        .contact-form-wrapper {
+            max-width: 600px;
+            margin: 0 auto 50px;
+            text-align: left;
+        }
+
+        .contact-form {
+            border: 4px solid var(--color-orange);
+            padding: 30px;
+            background-color: #222;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--color-green);
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            font-family: var(--font-pixel);
+            font-size: 0.9rem;
+            background-color: var(--color-dark);
+            color: var(--color-light);
+            border: 2px solid var(--color-green);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--color-orange);
+            box-shadow: 0 0 10px var(--color-orange);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Widget Turnstile */
+        .turnstile-wrapper {
+            margin: 25px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Botón de envío */
+        .btn-submit {
+            width: 100%;
+            font-family: var(--font-pixel);
+            padding: 15px;
+            font-size: 1.2rem;
+            background-color: var(--color-green);
+            color: var(--color-dark);
+            border: 2px solid var(--color-green);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: opacity 0.1s;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-submit:not(:disabled):hover {
+            animation: blink-animation 0.4s steps(2, start) infinite;
+        }
+
+        /* Mensaje de éxito/error */
+        .form-message {
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 1rem;
+            text-align: center;
+            border: 2px solid;
+            display: none;
+        }
+
+        .form-message.success {
+            border-color: var(--color-green);
+            color: var(--color-green);
+            background-color: rgba(51, 204, 51, 0.1);
+        }
+
+        .form-message.error {
+            border-color: var(--color-orange);
+            color: var(--color-orange);
+            background-color: rgba(255, 102, 0, 0.1);
+        }
+
+        .form-message.show {
+            display: block;
+        }
+
         /* --- Footer --- */
         footer {
             text-align: center;
@@ -499,13 +607,50 @@
 
         <!-- ======================= CONTACTO ======================= -->
         <section id="contacto">
-            <h2>Buscá el QR, no la excusa</h2>
+            <h2>¡Contactanos!</h2>
+
+            <!-- Formulario de Contacto -->
+            <div class="contact-form-wrapper">
+                <form id="contact-form" class="contact-form">
+                    <div class="form-group">
+                        <label for="name">Nombre:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Teléfono:</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Mensaje:</label>
+                        <textarea id="message" name="message" required></textarea>
+                    </div>
+
+                    <!-- Widget Cloudflare Turnstile -->
+                    <div class="turnstile-wrapper">
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAACEhM4-UMwTfa7bf" data-theme="dark"></div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Enviar Mensaje</button>
+
+                    <div id="form-message" class="form-message"></div>
+                </form>
+            </div>
+
+            <!-- Info de Contacto y QR -->
+            <h3 class="text-green" style="margin-top: 60px; margin-bottom: 30px;">O buscá el QR, no la excusa</h3>
             <div class="contact-content">
                 <!-- QR Placeholder -->
                 <div class="qr-placeholder">
                     <span class="qr-text">PIXEL<br>TERMO</span>
                 </div>
-                
+
                 <!-- Info de Contacto -->
                 <div class="contact-info">
                     <p>
@@ -562,6 +707,72 @@
                     nav.classList.remove('active');
                 });
             });
+
+            // 3. Manejo del formulario de contacto
+            const contactForm = document.getElementById('contact-form');
+            const formMessage = document.getElementById('form-message');
+
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // Obtener el token de Turnstile
+                const turnstileResponse = turnstile.getResponse();
+
+                if (!turnstileResponse) {
+                    showMessage('Por favor, completa la verificación de humanidad.', 'error');
+                    return;
+                }
+
+                // Obtener datos del formulario
+                const formData = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    message: document.getElementById('message').value,
+                    'cf-turnstile-response': turnstileResponse
+                };
+
+                // Deshabilitar botón mientras se envía
+                const submitBtn = contactForm.querySelector('.btn-submit');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Enviando...';
+
+                try {
+                    // Enviar al endpoint PHP
+                    const response = await fetch('contact.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showMessage(result.message || '¡Mensaje enviado! Te contactaremos pronto.', 'success');
+                        contactForm.reset();
+                        turnstile.reset();
+                    } else {
+                        showMessage(result.message || 'Error al enviar el mensaje. Intenta nuevamente.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showMessage('Error de conexión. Por favor intenta nuevamente.', 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Enviar Mensaje';
+                }
+            });
+
+            function showMessage(text, type) {
+                formMessage.textContent = text;
+                formMessage.className = `form-message ${type} show`;
+
+                setTimeout(() => {
+                    formMessage.classList.remove('show');
+                }, 5000);
+            }
         });
     </script>
 

@@ -1,0 +1,14 @@
+{
+    "name": "pixeltermo/website",
+    "description": "PIXEL TERMO - Website con formulario de contacto",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "PixelTermo\\": "src/"
+        }
+    }
+}
