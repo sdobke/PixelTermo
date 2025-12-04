@@ -6,7 +6,8 @@
 
 // Configuración de errores para debugging (desactivar en producción)
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
 
 // Headers para CORS y JSON
 header('Content-Type: application/json');
@@ -53,19 +54,33 @@ $turnstileVerified = verifyTurnstile($turnstileToken, TURNSTILE_SECRET_KEY);
 
 if (!$turnstileVerified) {
     http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Verificación de humanidad fallida']);
+    error_log("Turnstile verification failed. Token: " . substr($turnstileToken, 0, 20) . "...");
+    echo json_encode([
+        'success' => false,
+        'message' => 'Verificación de humanidad fallida',
+        'debug' => [
+            'token_received' => !empty($turnstileToken),
+            'token_length' => strlen($turnstileToken),
+            'secret_key_configured' => defined('TURNSTILE_SECRET_KEY') && !empty(TURNSTILE_SECRET_KEY)
+        ]
+    ]);
     exit;
 }
 
 // Enviar email
 $emailSent = sendContactEmail($name, $email, $phone, $message);
 
-if ($emailSent) {
+if ($emailSent === true) {
     http_response_code(200);
     echo json_encode(['success' => true, 'message' => '¡Mensaje enviado correctamente!']);
 } else {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Error al enviar el mensaje. Intenta nuevamente.']);
+    $errorDetails = is_array($emailSent) ? $emailSent : ['error' => 'Error desconocido'];
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error al enviar el mensaje. Revisa la consola para detalles.',
+        'debug' => $errorDetails
+    ]);
 }
 
 /**
@@ -80,23 +95,62 @@ function verifyTurnstile($token, $secretKey) {
         'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
     ];
 
-    $options = [
-        'http' => [
-            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method'  => 'POST',
-            'content' => http_build_query($data)
-        ]
-    ];
+    // Intentar con cURL primero (más confiable)
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
-    $context = stream_context_create($options);
-    $result = @file_get_contents($url, false, $context);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
 
-    if ($result === false) {
-        return false;
+        if ($result === false) {
+            error_log("Turnstile cURL error: " . $curlError);
+            return false;
+        }
+
+        if ($httpCode !== 200) {
+            error_log("Turnstile HTTP error: " . $httpCode);
+            return false;
+        }
+    }
+    // Fallback a file_get_contents
+    else {
+        $options = [
+            'http' => [
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method'  => 'POST',
+                'content' => http_build_query($data)
+            ]
+        ];
+
+        $context = stream_context_create($options);
+        $result = @file_get_contents($url, false, $context);
+
+        if ($result === false) {
+            error_log("Turnstile: Failed to contact Cloudflare API with file_get_contents");
+            return false;
+        }
     }
 
     $resultJson = json_decode($result, true);
-    return isset($resultJson['success']) && $resultJson['success'] === true;
+    error_log("Turnstile response: " . json_encode($resultJson));
+
+    if (!isset($resultJson['success'])) {
+        error_log("Turnstile: Invalid response format");
+        return false;
+    }
+
+    if ($resultJson['success'] !== true && isset($resultJson['error-codes'])) {
+        error_log("Turnstile errors: " . implode(', ', $resultJson['error-codes']));
+    }
+
+    return $resultJson['success'] === true;
 }
 
 /**
@@ -111,10 +165,7 @@ function sendContactEmail($name, $email, $phone, $message) {
 
     require __DIR__ . '/vendor/autoload.php';
 
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\Exception;
-
-    $mail = new PHPMailer(true);
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
 
     try {
         // Configuración del servidor SMTP
@@ -123,9 +174,17 @@ function sendContactEmail($name, $email, $phone, $message) {
         $mail->SMTPAuth   = true;
         $mail->Username   = SMTP_USERNAME;
         $mail->Password   = SMTP_PASSWORD;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        // Detectar tipo de encriptación según el puerto
+        $mail->SMTPSecure = (SMTP_PORT == 465) ? \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS : \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = SMTP_PORT;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 30; // Timeout de 30 segundos
+
+        // Debugging activado
+        $mail->SMTPDebug = 2; // 0=off, 1=client, 2=server
+        $mail->Debugoutput = function($str, $level) {
+            error_log("PHPMailer [$level]: $str");
+        };
 
         // Destinatarios
         $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
@@ -184,10 +243,15 @@ function sendContactEmail($name, $email, $phone, $message) {
                        . "Mensaje: {$message}\n";
 
         $mail->send();
+        error_log("Email enviado exitosamente a: " . CONTACT_EMAIL_TO);
         return true;
-    } catch (Exception $e) {
-        error_log("Error al enviar email: {$mail->ErrorInfo}");
-        return false;
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        error_log("Error PHPMailer: {$mail->ErrorInfo}");
+        error_log("Exception: {$e->getMessage()}");
+        return ['success' => false, 'error' => $mail->ErrorInfo, 'exception' => $e->getMessage()];
+    } catch (\Exception $e) {
+        error_log("Error General: {$e->getMessage()}");
+        return ['success' => false, 'error' => 'Error general', 'exception' => $e->getMessage()];
     }
 }
 

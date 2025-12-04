@@ -1,0 +1,16 @@
+# PIXEL TERMO - Robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /vendor/
+Disallow: /cache/
+Disallow: /config.php
+Disallow: /test-*.php
+Disallow: /check-*.php
+Disallow: /*.log
+
+# Sitemap
+Sitemap: https://www.pixeltermo.com.ar/sitemap.xml
+
+# Crawl-delay para bots
+Crawl-delay: 1
