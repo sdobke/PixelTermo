@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 	<!-- Meta tags básicos -->
 	<meta charset="UTF-8">
@@ -39,14 +40,12 @@
 	<meta name="twitter:creator" content="@pixeltermo">
 
 	<!-- Favicon -->
-	<link rel="icon" type="image/x-icon" href="/favicon.ico">
-	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-
-	<!-- Theme Color -->
-	<meta name="theme-color" content="#1a1a1a">
-	<meta name="msapplication-TileColor" content="#FF6600">
+	<link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
+	<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+	<link rel="shortcut icon" href="/favicon/favicon.ico" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+	<meta name="apple-mobile-web-app-title" content="PixelTermo" />
+	<link rel="manifest" href="/favicon/site.webmanifest" />
 
 	<!-- DNS Prefetch / Preconnect -->
 	<link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -58,78 +57,76 @@
 	<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 	<!-- Stylesheet -->
-	 <?php
+	<?php
 	// Smart CSS loading con cache busting
 	$cssFile = file_exists('css/styles.min.css')
 		? 'css/styles.min.css'
 		: 'css/styles.css';
 	$cssVersion = file_exists($cssFile) ? '?v=' . filemtime($cssFile) : '';
 	?>
-	
+
 	<link rel="stylesheet" href="<?php echo $cssFile . $cssVersion; ?>">
-	
+
 	<!-- Cloudflare Turnstile -->
 	<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 	<!-- Structured Data (JSON-LD) -->
 	<script type="application/ld+json">
-	{
-		"@context": "https://schema.org",
-		"@type": "Organization",
-		"name": "PIXEL TERMO",
-		"url": "https://www.pixeltermo.com.ar",
-		"logo": "https://www.pixeltermo.com.ar/img/logo.webp",
-		"description": "Agencia de marketing digital en Argentina que fusiona estrategia digital con cercanía humana",
-		"foundingDate": "2024",
-		"founders": [
-			{
-				"@type": "Person",
-				"name": "Andrea Fontes",
-				"jobTitle": "CO-FOUNDER | CMO"
-			},
-			{
-				"@type": "Person",
-				"name": "Sebastián P. Pastorini Suarez",
-				"jobTitle": "CO-FOUNDER | KAM"
-			}
-		],
-		"address": {
-			"@type": "PostalAddress",
-			"addressCountry": "AR",
-			"addressLocality": "Argentina"
-		},
-		"contactPoint": {
-			"@type": "ContactPoint",
-			"telephone": "+54-11-5174-4718",
-			"contactType": "Customer Service",
-			"email": "info@pixeltermo.com.ar",
-			"availableLanguage": ["es"]
-		},
-		"sameAs": [
-			"https://www.instagram.com/pixeltermo"
-		],
-		"offers": {
-			"@type": "AggregateOffer",
-			"offerCount": "3",
-			"offers": [
-				{
-					"@type": "Offer",
-					"name": "Estrategia CMO",
-					"description": "Planes de marketing que dejan huella"
+		{
+			"@context": "https://schema.org",
+			"@type": "Organization",
+			"name": "PIXEL TERMO",
+			"url": "https://www.pixeltermo.com.ar",
+			"logo": "https://www.pixeltermo.com.ar/img/logo.webp",
+			"description": "Agencia de marketing digital en Argentina que fusiona estrategia digital con cercanía humana",
+			"foundingDate": "2024",
+			"founders": [{
+					"@type": "Person",
+					"name": "Andrea Fontes",
+					"jobTitle": "CO-FOUNDER | CMO"
 				},
 				{
-					"@type": "Offer",
-					"name": "Gestión KAM",
-					"description": "Manejo de cuentas clave para impulsar tu negocio"
-				},
-				{
-					"@type": "Offer",
-					"name": "Pixel Power",
-					"description": "Publicidad digital, redes sociales y diseño web que convierten"
+					"@type": "Person",
+					"name": "Sebastián P. Pastorini Suarez",
+					"jobTitle": "CO-FOUNDER | KAM"
 				}
-			]
+			],
+			"address": {
+				"@type": "PostalAddress",
+				"addressCountry": "AR",
+				"addressLocality": "Argentina"
+			},
+			"contactPoint": {
+				"@type": "ContactPoint",
+				"telephone": "+54-11-5174-4718",
+				"contactType": "Customer Service",
+				"email": "info@pixeltermo.com.ar",
+				"availableLanguage": ["es"]
+			},
+			"sameAs": [
+				"https://www.instagram.com/pixeltermo"
+			],
+			"offers": {
+				"@type": "AggregateOffer",
+				"offerCount": "3",
+				"offers": [{
+						"@type": "Offer",
+						"name": "Estrategia CMO",
+						"description": "Planes de marketing que dejan huella"
+					},
+					{
+						"@type": "Offer",
+						"name": "Gestión KAM",
+						"description": "Manejo de cuentas clave para impulsar tu negocio"
+					},
+					{
+						"@type": "Offer",
+						"name": "Pixel Power",
+						"description": "Publicidad digital, redes sociales y diseño web que convierten"
+					}
+				]
+			}
 		}
-	}
 	</script>
 </head>
 
@@ -302,4 +299,5 @@
 	<script src="<?php echo $jsFile . $jsVersion; ?>" defer></script>
 
 </body>
+
 </html>
