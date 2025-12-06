@@ -58,8 +58,16 @@
 	<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 	<!-- Stylesheet -->
-	<link rel="stylesheet" href="css/styles.css">
-
+	 <?php
+	// Smart CSS loading con cache busting
+	$cssFile = file_exists('css/styles.min.css')
+		? 'css/styles.min.css'
+		: 'css/styles.css';
+	$cssVersion = file_exists($cssFile) ? '?v=' . filemtime($cssFile) : '';
+	?>
+	
+	<link rel="stylesheet" href="<?php echo $cssFile . $cssVersion; ?>">
+	
 	<!-- Cloudflare Turnstile -->
 	<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
@@ -285,7 +293,13 @@
 	</footer>
 
 	<!-- JavaScript -->
-	<script src="js/main.js" defer></script>
+	<?php
+	$jsFile = file_exists('js/main.min.js')
+		? 'js/main.min.js'
+		: 'js/main.js';
+	$jsVersion = file_exists($jsFile) ? '?v=' . filemtime($jsFile) : '';
+	?>
+	<script src="<?php echo $jsFile . $jsVersion; ?>" defer></script>
 
 </body>
 </html>
