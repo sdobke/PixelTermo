@@ -14,3 +14,6 @@ config.php
 # Composer
 /vendor/
 composer.lock
+
+# Archivos de desarrollo y testing
+/backup/
